@@ -1,0 +1,105 @@
+# AGENTS.md — Aegis Agent Instructions
+
+> This file provides instructions, guardrails, and policies for any AI agent
+> (including GitHub Copilot, Copilot Chat, or custom agents) operating inside
+> this repository.
+
+---
+
+## 1. Project identity
+
+| Field | Value |
+|---|---|
+| Project name | **Aegis** |
+| CLI binary | `aegisctl` |
+| Language | Go (stdlib only) |
+| Primary framework | Azure Well-Architected Framework (WAF) |
+| Default behaviour | **Generate-only** — never deploy unless explicitly opted in |
+
+## 2. Repository conventions
+
+- **Go stdlib only** — do not introduce third-party Go modules.
+- **Bicep** for all Azure IaC — no ARM JSON, no Terraform.
+- **GitHub Actions** for CI/CD — no other CI system.
+- No secrets, tokens, or credentials may be committed. Use `REDACTED` if an
+  example is needed. Example values must be clearly labelled `<!-- EXAMPLE ONLY -->`.
+- Terminology: **WAF** always means **Well-Architected Framework**. If you need
+  to reference Web Application Firewall, spell it out in full.
+
+## 3. Agent guardrails
+
+### 3.1 Do-no-harm principle
+
+1. **Never** generate code that deploys, mutates, or deletes Azure resources
+   without the user explicitly requesting it AND confirming autodeploy mode.
+2. **Never** embed real secrets — always use placeholders marked `REDACTED`.
+3. **Never** produce ARM JSON. Always use Bicep.
+4. **Never** assume the user wants to deploy. Default is generate-only.
+
+### 3.2 File-safety rules
+
+- Do not modify files outside this repository.
+- Do not create files in `/infra` that contain `Microsoft.Resources/deployments`
+  with mode `Complete` (risk of resource deletion).
+- Always validate Bicep with `bicep build` before suggesting a deployment.
+
+### 3.3 Scope boundaries
+
+- Aegis outputs **advisory artefacts** (docs, checklists, IaC scaffolds).
+  It is not a deployment orchestrator by default.
+- The WAF scorecard is **heuristic and non-official**. Always include the
+  disclaimer that scores are not endorsed by Microsoft.
+- AWS migration mapping is **best-effort** and must be flagged as such.
+
+## 4. Deploy modes
+
+| Mode | Trigger | Approval required | Default |
+|---|---|---|---|
+| `generate` | Any `aegisctl pack` run | No | **Yes** |
+| `manual` | `workflow_dispatch` on deploy.yml | GitHub Environment approval | No |
+| `auto` | Push to `main` (if enabled) | GitHub Environment approval | No |
+
+### Switching modes
+
+```bash
+# Generate-only (default, safe)
+aegisctl pack --deploy-mode=generate
+
+# Manual deploy — triggers workflow_dispatch, still needs Environment approval
+aegisctl pack --deploy-mode=manual
+
+# Auto deploy — merges trigger deploy.yml on push, still needs Environment approval
+aegisctl pack --deploy-mode=auto
+```
+
+> **Agents must never switch deploy mode on behalf of the user.**
+> If a user asks to deploy, confirm the mode change explicitly.
+
+## 5. Scoring policy (WAF scorecard)
+
+- Each WAF pillar is scored **0–5** using heuristic checks.
+- Scores are **non-official** and must always carry a disclaimer.
+- Scoring inputs:
+  - Repository analysis (secrets, config, IaC presence).
+  - Architecture alignment (managed services, redundancy, monitoring).
+  - CI/CD maturity (tests, gates, approvals).
+- A "Top 5 improvements" list must accompany every scorecard.
+
+## 6. Interaction patterns
+
+When an agent is asked to:
+
+| Request | Correct response |
+|---|---|
+| "Generate an architecture pack" | Run `aegisctl pack` in generate mode |
+| "Deploy to Azure" | Confirm deploy mode, require environment approval |
+| "Score my repo" | Run `aegisctl score`, include disclaimer |
+| "Migrate from AWS" | Run `aegisctl migrate-aws`, flag best-effort |
+| "Add a secret to config" | Refuse; recommend Managed Identity → Key Vault pattern |
+
+## 7. References
+
+- [Azure Well-Architected Framework](https://learn.microsoft.com/azure/well-architected/)
+- [Azure Cloud Adoption Framework](https://learn.microsoft.com/azure/cloud-adoption-framework/)
+- [Bicep documentation](https://learn.microsoft.com/azure/azure-resource-manager/bicep/)
+- [GitHub Actions documentation](https://docs.github.com/actions)

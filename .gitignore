@@ -1,0 +1,55 @@
+# Go binaries & build artefacts
+/bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Go test / coverage
+*.test
+*.out
+coverage.html
+
+# Go workspace
+go.work
+go.work.sum
+
+# Dependency directory (vendor is committed selectively)
+# vendor/
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Secrets — never commit
+*.pem
+*.key
+*.pfx
+*.env
+.env.*
+!.env.example
+
+# Bicep build outputs (ARM JSON)
+/infra/*.json
+!/infra/parameters.*.json
+
+# Terraform (just in case)
+.terraform/
+*.tfstate
+*.tfstate.*
+
+# Node (if tooling added later)
+node_modules/
+
+# Aegis output packs (generated, not committed)
+/output/
+/packs/

@@ -1,0 +1,104 @@
+# Aegis — Deploy: Gated Azure Deployment
+#
+# GUARDRAILS:
+#   - Deployment ALWAYS requires GitHub Environment approval.
+#   - Manual trigger (workflow_dispatch) is always available.
+#   - Auto trigger (push to main) is opt-in and STILL requires approval.
+#   - Deployment mode is ALWAYS Incremental (never Complete).
+#   - A what-if preview is generated before deployment for human review.
+#   - Default behaviour is generate-only — this workflow only runs when
+#     explicitly configured via deploy mode.
+#
+# SAFE DEFAULTS:
+#   - This workflow does NOT run on push by default.
+#   - The push trigger is commented out. Uncomment ONLY if deploy mode is 'auto'.
+#   - Even with auto trigger, Environment approval is mandatory.
+
+name: Deploy
+
+on:
+  # Manual trigger — always available for 'manual' and 'auto' deploy modes
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - production
+      dry_run:
+        description: 'Dry run (what-if only, no deploy)'
+        required: true
+        default: true
+        type: boolean
+
+  # Auto trigger — UNCOMMENT ONLY if deploy mode is 'auto'
+  # Even with this trigger, the Environment approval gate is mandatory.
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - 'infra/**'
+
+permissions:
+  contents: read
+  id-token: write  # Required for OIDC federation with Azure
+
+jobs:
+  deploy:
+    name: Deploy to Azure
+    runs-on: ubuntu-latest
+
+    # CRITICAL: Environment approval gate — human must approve before deploy
+    environment:
+      name: ${{ github.event.inputs.environment || 'dev' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # TODO: Configure OIDC federation for Azure login (no stored secrets)
+      - name: Azure Login (OIDC)
+        run: |
+          echo "TODO: Configure Azure OIDC federation"
+          echo "See: https://learn.microsoft.com/azure/developer/github/connect-from-azure"
+          # uses: azure/login@v2
+          # with:
+          #   client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          #   tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          #   subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: What-if preview
+        run: |
+          echo "TODO: Generate what-if preview for human review"
+          echo "Environment: ${{ github.event.inputs.environment || 'dev' }}"
+          # PARAMS_FILE="infra/parameters.${{ github.event.inputs.environment || 'dev' }}.json"
+          # az deployment group what-if \
+          #   --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
+          #   --template-file infra/main.bicep \
+          #   --parameters $PARAMS_FILE
+
+      - name: Deploy (Incremental mode ONLY)
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: |
+          echo "TODO: Deploy with Incremental mode"
+          echo "IMPORTANT: Mode is ALWAYS Incremental — never Complete"
+          echo "Environment: ${{ github.event.inputs.environment || 'dev' }}"
+          # PARAMS_FILE="infra/parameters.${{ github.event.inputs.environment || 'dev' }}.json"
+          # az deployment group create \
+          #   --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
+          #   --template-file infra/main.bicep \
+          #   --parameters $PARAMS_FILE \
+          #   --mode Incremental \
+          #   --confirm-with-what-if
+
+      - name: Deployment summary
+        run: |
+          echo "========================================="
+          echo "Deployment workflow completed."
+          echo "Environment: ${{ github.event.inputs.environment || 'dev' }}"
+          echo "Dry run: ${{ github.event.inputs.dry_run || 'true' }}"
+          echo "Mode: Incremental (always)"
+          echo "========================================="

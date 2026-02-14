@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json.schemastore.org/mcp.json",
+  "_comment": "Aegis does not currently use any MCP (Model Context Protocol) servers. This placeholder file is included to satisfy the GitHub Copilot SDK Enterprise Challenge structure requirements. If MCP integration is added in the future, server definitions will be registered here.",
+  "servers": {}
+}

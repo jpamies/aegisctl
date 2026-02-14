@@ -1,0 +1,53 @@
+# Aegis — IaC Validation: Bicep Lint & Build
+# This workflow validates Bicep templates without deploying anything.
+# Triggered on changes to the infra/ directory.
+
+name: IaC Validate
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'infra/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'infra/**'
+
+permissions:
+  contents: read
+
+jobs:
+  bicep-validate:
+    name: Bicep Lint & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # TODO: Replace echo stubs with real Bicep CLI steps
+      - name: Set up Bicep CLI
+        run: |
+          echo "TODO: Install Bicep CLI"
+          # az bicep install
+          # az bicep version
+
+      - name: Lint Bicep templates
+        run: |
+          echo "TODO: Lint Bicep templates"
+          # az bicep lint --file infra/main.bicep
+
+      - name: Build Bicep (compile to ARM for validation)
+        run: |
+          echo "TODO: Build Bicep templates"
+          # az bicep build --file infra/main.bicep --stdout > /dev/null
+
+      - name: What-if preview (dry run)
+        run: |
+          echo "TODO: What-if preview (requires Azure credentials)"
+          echo "This step validates the template against Azure without making changes."
+          # az deployment group what-if \
+          #   --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
+          #   --template-file infra/main.bicep \
+          #   --parameters infra/parameters.dev.json
