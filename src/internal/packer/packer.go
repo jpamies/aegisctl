@@ -8,10 +8,10 @@ import (
 	"path/filepath"
 	"text/template"
 
-	"github.com/aegis/aegisctl/internal/analyzer"
-	"github.com/aegis/aegisctl/internal/migrator"
-	"github.com/aegis/aegisctl/internal/output"
-	"github.com/aegis/aegisctl/internal/scorer"
+	"github.com/jpamies/aegisctl/internal/analyzer"
+	"github.com/jpamies/aegisctl/internal/migrator"
+	"github.com/jpamies/aegisctl/internal/output"
+	"github.com/jpamies/aegisctl/internal/scorer"
 )
 
 // Config holds pack generation configuration.
@@ -162,29 +162,29 @@ func generateWorkflows(cfg Config) error {
 	}
 
 	// CI workflow
-	ciContent, err := output.RenderTemplate("ci", output.CIPipelineTmpl, nil)
+	ciContent, err := output.RenderTemplate("ci", output.CIWorkflowTmpl, nil)
 	if err != nil {
 		return err
 	}
-	if err := output.WriteFile(filepath.Join(cfg.OutputDir, "pipelines", "ci.yml"), ciContent); err != nil {
+	if err := output.WriteFile(filepath.Join(cfg.OutputDir, ".github", "workflows", "ci.yml"), ciContent); err != nil {
 		return err
 	}
 
 	// IaC validate workflow
-	iacContent, err := output.RenderTemplate("iac-validate", output.IaCValidatePipelineTmpl, nil)
+	iacContent, err := output.RenderTemplate("iac-validate", output.IaCValidateWorkflowTmpl, nil)
 	if err != nil {
 		return err
 	}
-	if err := output.WriteFile(filepath.Join(cfg.OutputDir, "pipelines", "iac-validate.yml"), iacContent); err != nil {
+	if err := output.WriteFile(filepath.Join(cfg.OutputDir, ".github", "workflows", "iac-validate.yml"), iacContent); err != nil {
 		return err
 	}
 
 	// Deploy workflow
-	deployContent, err := output.RenderTemplate("deploy", output.DeployPipelineTmpl, deployData)
+	deployContent, err := output.RenderTemplate("deploy", output.DeployWorkflowTmpl, deployData)
 	if err != nil {
 		return err
 	}
-	return output.WriteFile(filepath.Join(cfg.OutputDir, "pipelines", "deploy.yml"), deployContent)
+	return output.WriteFile(filepath.Join(cfg.OutputDir, ".github", "workflows", "deploy.yml"), deployContent)
 }
 
 // renderWithFuncs renders a template with custom functions.

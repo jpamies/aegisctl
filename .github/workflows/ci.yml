@@ -1,0 +1,58 @@
+# Aegis — CI: Build, Test, Lint
+# Runs on every push and pull request to main/develop.
+
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Check formatting
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "::error::Files not formatted:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test -v -race -coverprofile=coverage.out ./...
+
+      - name: Build
+        run: go build -v -o ../bin/aegisctl ./cmd/aegisctl
+
+      - name: Cross-compile
+        run: |
+          GOOS=linux   GOARCH=amd64 go build -o ../bin/aegisctl-linux-amd64   ./cmd/aegisctl
+          GOOS=darwin  GOARCH=amd64 go build -o ../bin/aegisctl-darwin-amd64  ./cmd/aegisctl
+          GOOS=darwin  GOARCH=arm64 go build -o ../bin/aegisctl-darwin-arm64  ./cmd/aegisctl
+          GOOS=windows GOARCH=amd64 go build -o ../bin/aegisctl-windows-amd64.exe ./cmd/aegisctl
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: binaries
+          path: bin/

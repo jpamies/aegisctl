@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/aegis/aegisctl/internal/state"
+	"github.com/jpamies/aegisctl/internal/state"
 )
 
 func testState() *state.AnalysisState {
@@ -77,9 +77,9 @@ func TestGenerate_CreatesFiles(t *testing.T) {
 		filepath.Join("infra", "main.bicep"),
 		filepath.Join("infra", "parameters.dev.json"),
 		filepath.Join("infra", "parameters.prod.json"),
-		filepath.Join("pipelines", "ci.yml"),
-		filepath.Join("pipelines", "iac-validate.yml"),
-		filepath.Join("pipelines", "deploy.yml"),
+		filepath.Join(".github", "workflows", "ci.yml"),
+		filepath.Join(".github", "workflows", "iac-validate.yml"),
+		filepath.Join(".github", "workflows", "deploy.yml"),
 		filepath.Join("docs", "ARCHITECTURE.md"),
 		filepath.Join("docs", "SECURITY.md"),
 		filepath.Join("docs", "WAF_CHECKLIST.md"),
@@ -190,7 +190,7 @@ func TestGenerate_DeployModeDefault(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	deploy, _ := os.ReadFile(filepath.Join(outDir, "pipelines", "deploy.yml"))
+	deploy, _ := os.ReadFile(filepath.Join(outDir, ".github", "workflows", "deploy.yml"))
 	content := string(deploy)
 
 	if !strings.Contains(content, "Deploy") {

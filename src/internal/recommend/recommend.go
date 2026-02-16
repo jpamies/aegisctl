@@ -7,9 +7,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/aegis/aegisctl/internal/analyzer"
-	"github.com/aegis/aegisctl/internal/copilot"
-	"github.com/aegis/aegisctl/internal/state"
+	"github.com/jpamies/aegisctl/internal/analyzer"
+	"github.com/jpamies/aegisctl/internal/copilot"
+	"github.com/jpamies/aegisctl/internal/state"
 )
 
 // EnrichAnalysis takes heuristic findings and enriches them with LLM analysis.
@@ -236,9 +236,9 @@ func planHeuristic(s *state.AnalysisState) *state.Plan {
 			"infra/main.bicep",
 			"infra/parameters.dev.json",
 			"infra/parameters.prod.json",
-			"pipelines/ci.yml",
-			"pipelines/iac-validate.yml",
-			"pipelines/deploy.yml",
+			".github/workflows/ci.yml",
+			".github/workflows/iac-validate.yml",
+			".github/workflows/deploy.yml",
 			"docs/ARCHITECTURE.md",
 			"docs/WAF_CHECKLIST.md",
 			"docs/SECURITY.md",

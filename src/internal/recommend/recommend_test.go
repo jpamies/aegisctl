@@ -3,8 +3,8 @@ package recommend
 import (
 	"testing"
 
-	"github.com/aegis/aegisctl/internal/analyzer"
-	"github.com/aegis/aegisctl/internal/state"
+	"github.com/jpamies/aegisctl/internal/analyzer"
+	"github.com/jpamies/aegisctl/internal/state"
 )
 
 func TestEnrichHeuristic_Go(t *testing.T) {

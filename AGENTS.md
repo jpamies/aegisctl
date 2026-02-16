@@ -20,7 +20,7 @@
 
 - **Go stdlib only** — do not introduce third-party Go modules.
 - **Bicep** for all Azure IaC — no ARM JSON, no Terraform.
-- **Azure DevOps Pipelines** for CI/CD. Releases are published to **GitHub Releases**.
+- **GitHub Actions** for CI/CD. Releases are published via **GitHub Releases**.
 - No secrets, tokens, or credentials may be committed. Use `REDACTED` if an
   example is needed. Example values must be clearly labelled `<!-- EXAMPLE ONLY -->`.
 - Terminology: **WAF** always means **Well-Architected Framework**. If you need
@@ -63,7 +63,7 @@ aegisctl apply <repoPath> --output <dir>        # Write IaC + pipelines + docs
 
 - **init** — heuristic repo scan + optional Copilot enrichment (requires `AEGIS_GITHUB_TOKEN` or `GITHUB_TOKEN`).
 - **plan** — generates 3 architecture options with WAF scores; interactive selection.
-- **apply** — produces Bicep, Azure DevOps Pipelines, and documentation.
+- **apply** — produces Bicep, GitHub Actions workflows, and documentation.
 - **analyze** — quick print-only analysis (no state).
 
 ### Deploy modes
@@ -71,8 +71,8 @@ aegisctl apply <repoPath> --output <dir>        # Write IaC + pipelines + docs
 | Mode | Flag | Approval required | Default |
 |---|---|---|---|
 | `off` | `--deploy off` | No | **Yes** |
-| `manual` | `--deploy manual` | Azure DevOps Environment approval | No |
-| `auto` | `--deploy auto` | Azure DevOps Environment approval | No |
+| `manual` | `--deploy manual` | GitHub Environment approval | No |
+| `auto` | `--deploy auto` | GitHub Environment approval | No |
 
 > **Agents must never switch deploy mode on behalf of the user.**
 > If a user asks to deploy, confirm the mode change explicitly.
@@ -114,4 +114,4 @@ When an agent is asked to:
 - [Azure Well-Architected Framework](https://learn.microsoft.com/azure/well-architected/)
 - [Azure Cloud Adoption Framework](https://learn.microsoft.com/azure/cloud-adoption-framework/)
 - [Bicep documentation](https://learn.microsoft.com/azure/azure-resource-manager/bicep/)
-- [Azure DevOps Pipelines documentation](https://learn.microsoft.com/azure/devops/pipelines/)
+- [GitHub Actions documentation](https://docs.github.com/actions)

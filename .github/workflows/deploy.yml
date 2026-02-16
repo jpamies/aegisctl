@@ -1,0 +1,99 @@
+# Aegis — Deploy: Approval-Gated Azure Deployment
+#
+# GUARDRAILS:
+#   - Deployment ALWAYS requires GitHub Environment approval.
+#   - Manual trigger (workflow_dispatch) is always available.
+#   - Deployment mode is ALWAYS Incremental (never Complete).
+#   - A what-if preview is generated before deployment for human review.
+#   - Default behaviour is generate-only — this workflow only runs when
+#     explicitly configured via deploy mode.
+#
+# SAFE DEFAULTS:
+#   - Requires workflow_dispatch (manual). No auto-trigger.
+#   - Even when triggered, Environment approval is mandatory.
+
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - production
+      dry_run:
+        description: 'Dry run (what-if only, no deploy)'
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  id-token: write   # OIDC federation
+  contents: read
+
+jobs:
+  preview:
+    name: What-If Preview
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: What-if preview
+        run: |
+          echo "Environment: ${{ inputs.environment }}"
+          PARAMS_FILE="infra/parameters.${{ inputs.environment }}.json"
+          az deployment group what-if \
+            --resource-group ${{ vars.AZURE_RESOURCE_GROUP }}-${{ inputs.environment }} \
+            --template-file infra/main.bicep \
+            --parameters $PARAMS_FILE \
+            --mode Incremental
+
+  deploy:
+    name: Deploy to Azure
+    needs: preview
+    if: ${{ inputs.dry_run == false }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy (Incremental mode ONLY)
+        run: |
+          echo "Deploying to: ${{ inputs.environment }}"
+          echo "IMPORTANT: Mode is ALWAYS Incremental — never Complete"
+          PARAMS_FILE="infra/parameters.${{ inputs.environment }}.json"
+          az deployment group create \
+            --resource-group ${{ vars.AZURE_RESOURCE_GROUP }}-${{ inputs.environment }} \
+            --template-file infra/main.bicep \
+            --parameters $PARAMS_FILE \
+            --mode Incremental
+
+      - name: Deployment summary
+        run: |
+          echo "========================================="
+          echo "Deployment complete"
+          echo "Environment: ${{ inputs.environment }}"
+          echo "Mode: Incremental"
+          echo "========================================="

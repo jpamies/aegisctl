@@ -1,0 +1,36 @@
+# Aegis — IaC Validation: Bicep Lint & Build
+# Validates Bicep templates without deploying.
+
+name: IaC Validate
+
+on:
+  push:
+    branches: [main, develop]
+    paths: ['infra/**']
+  pull_request:
+    branches: [main]
+    paths: ['infra/**']
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Bicep Validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Bicep CLI
+        run: |
+          az bicep install
+          az bicep version
+
+      - name: Bicep lint
+        run: az bicep lint --file infra/main.bicep
+
+      - name: Bicep build (validate)
+        run: |
+          az bicep build --file infra/main.bicep --stdout > /dev/null
+          echo "Bicep template compiled successfully."

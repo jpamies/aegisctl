@@ -4,7 +4,7 @@
 
 Aegis (`aegisctl`) analyzes an application repository and produces
 **Azure Well-Architected, minimum-cost architecture recommendations**:
-multi-option plans with WAF scores, Bicep IaC, Azure DevOps Pipelines CI/CD,
+multi-option plans with WAF scores, Bicep IaC, GitHub Actions CI/CD,
 security remediation guidance, and AWS→Azure migration support.
 
 Uses **GitHub Copilot** (via GitHub Models API) for intelligent analysis
@@ -28,7 +28,7 @@ flowchart LR
     copilot -.-> plan
     copilot -.-> apply
     apply --> bicep["Bicep IaC"]
-    apply --> pipelines["Azure DevOps\nPipelines"]
+    apply --> pipelines["GitHub Actions"]
     apply --> docs["Architecture Docs"]
 ```
 
@@ -163,7 +163,7 @@ flowchart TB
 | `internal/copilot` | GitHub Models API client with structured prompts |
 | `internal/recommend` | Generates architecture options (Copilot or heuristic fallback) |
 | `internal/state` | Persists `.aegis/state.json` and `.aegis/plan.json` |
-| `internal/generator` | Produces Bicep, Azure DevOps Pipelines, architecture docs |
+| `internal/generator` | Produces Bicep, GitHub Actions, architecture docs |
 | `internal/output` | Go `text/template` rendering + `WriteFile` helper |
 
 ---
@@ -177,9 +177,9 @@ The `apply` command generates a complete, production-ready set of files:
 | `infra/main.bicep` | Azure Bicep template (adapts to selected architecture) |
 | `infra/parameters.dev.json` | Dev environment parameters |
 | `infra/parameters.prod.json` | Prod environment parameters |
-| `pipelines/ci.yml` | CI pipeline (build + test + lint) |
-| `pipelines/iac-validate.yml` | IaC validation pipeline |
-| `pipelines/deploy.yml` | Gated deploy with environment approval |
+| `.github/workflows/ci.yml` | CI workflow (build + test + lint) |
+| `.github/workflows/iac-validate.yml` | IaC validation workflow |
+| `.github/workflows/deploy.yml` | Gated deploy with OIDC + environment approval |
 | `docs/ARCHITECTURE.md` | **Detailed architecture** with Mermaid diagrams, resource inventory, naming, WAF scores |
 | `docs/SECURITY.md` | Security posture + remediation steps |
 | `docs/WAF_CHECKLIST.md` | WAF pillar checklist |
@@ -191,7 +191,7 @@ The architecture document includes:
 - **Mermaid architecture diagram** — all Azure resources with naming conventions
 - **Resource inventory table** — resource type, ARM type, dev/prod names, SKUs, purpose
 - **Security architecture diagram** — Managed Identity + Key Vault + OIDC flow
-- **CI/CD pipeline diagram** — Azure DevOps build → validate → gate → deploy
+- **CI/CD pipeline diagram** — build → validate → gate → deploy
 - **WAF scorecard** — visual bar chart per pillar with overall score
 - **Alternative options** — other architectures considered with cost/WAF comparison
 - **Migration steps** — for AWS→Azure scenarios
@@ -241,7 +241,7 @@ Copilot is used at every stage when available:
 ### Quick start
 
 ```bash
-git clone https://github.com/aegis/aegisctl.git
+git clone https://github.com/jpamies/aegisctl.git
 cd aegisctl
 
 # Run the full local CI pipeline
@@ -297,8 +297,7 @@ aegisctl/
 │       └── scorer/          WAF scorecard (legacy)
 ├── infra/                   Reference Bicep templates
 ├── docs/                    Documentation
-├── pipelines/               Azure DevOps CI, IaC validation, deploy, release
-└── bin/                     Build output
+└── .github/workflows/       CI, IaC validation, deploy, release
 ```
 
 ### Running tests
@@ -313,7 +312,7 @@ make test-cover-html    # HTML coverage report
 
 - **Go stdlib only** — no third-party modules.
 - **Bicep** for all Azure IaC — no ARM JSON, no Terraform.
-- **Azure DevOps Pipelines** for CI/CD (releases published to GitHub Releases).
+- **GitHub Actions** for CI/CD.
 - No secrets or credentials in code — use `REDACTED` for placeholders.
 - WAF always means **Well-Architected Framework** in this project.
 
@@ -338,7 +337,7 @@ make test-cover-html    # HTML coverage report
 - [Azure Cloud Adoption Framework](https://learn.microsoft.com/azure/cloud-adoption-framework/)
 - [Azure naming conventions](https://learn.microsoft.com/azure/cloud-adoption-framework/ready/azure-best-practices/resource-naming)
 - [Bicep documentation](https://learn.microsoft.com/azure/azure-resource-manager/bicep/)
-- [Azure DevOps Pipelines](https://learn.microsoft.com/azure/devops/pipelines/)
+- [GitHub Actions for Azure](https://learn.microsoft.com/azure/developer/github/github-actions)
 - [GitHub Models API](https://docs.github.com/en/github-models)
 
 ## License

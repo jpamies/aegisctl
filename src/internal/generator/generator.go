@@ -9,9 +9,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/aegis/aegisctl/internal/copilot"
-	"github.com/aegis/aegisctl/internal/output"
-	"github.com/aegis/aegisctl/internal/state"
+	"github.com/jpamies/aegisctl/internal/copilot"
+	"github.com/jpamies/aegisctl/internal/output"
+	"github.com/jpamies/aegisctl/internal/state"
 )
 
 // Config holds apply-time configuration.
@@ -36,7 +36,7 @@ func Generate(client *copilot.Client, s *state.AnalysisState, p *state.Plan, cfg
 		return fmt.Errorf("generating Bicep: %w", err)
 	}
 
-	// 2. Generate Azure DevOps pipelines
+	// 2. Generate GitHub Actions workflows
 	if err := generatePipelines(client, s, &option, cfg); err != nil {
 		return fmt.Errorf("generating pipelines: %w", err)
 	}
@@ -205,34 +205,34 @@ func generatePipelinesFromTemplates(s *state.AnalysisState, option *state.ArchOp
 	deployData := struct{ DeployMode string }{DeployMode: cfg.DeployMode}
 
 	// CI
-	ciContent, err := output.RenderTemplate("ci", output.CIPipelineTmpl, nil)
+	ciContent, err := output.RenderTemplate("ci", output.CIWorkflowTmpl, nil)
 	if err != nil {
 		return err
 	}
-	if err := output.WriteFile(filepath.Join(cfg.OutputDir, "pipelines", "ci.yml"), ciContent); err != nil {
+	if err := output.WriteFile(filepath.Join(cfg.OutputDir, ".github", "workflows", "ci.yml"), ciContent); err != nil {
 		return err
 	}
-	fmt.Println("  ✓ pipelines/ci.yml")
+	fmt.Println("  ✓ .github/workflows/ci.yml")
 
 	// IaC validate
-	iacContent, err := output.RenderTemplate("iac-validate", output.IaCValidatePipelineTmpl, nil)
+	iacContent, err := output.RenderTemplate("iac-validate", output.IaCValidateWorkflowTmpl, nil)
 	if err != nil {
 		return err
 	}
-	if err := output.WriteFile(filepath.Join(cfg.OutputDir, "pipelines", "iac-validate.yml"), iacContent); err != nil {
+	if err := output.WriteFile(filepath.Join(cfg.OutputDir, ".github", "workflows", "iac-validate.yml"), iacContent); err != nil {
 		return err
 	}
-	fmt.Println("  ✓ pipelines/iac-validate.yml")
+	fmt.Println("  ✓ .github/workflows/iac-validate.yml")
 
 	// Deploy
-	deployContent, err := output.RenderTemplate("deploy", output.DeployPipelineTmpl, deployData)
+	deployContent, err := output.RenderTemplate("deploy", output.DeployWorkflowTmpl, deployData)
 	if err != nil {
 		return err
 	}
-	if err := output.WriteFile(filepath.Join(cfg.OutputDir, "pipelines", "deploy.yml"), deployContent); err != nil {
+	if err := output.WriteFile(filepath.Join(cfg.OutputDir, ".github", "workflows", "deploy.yml"), deployContent); err != nil {
 		return err
 	}
-	fmt.Println("  ✓ pipelines/deploy.yml")
+	fmt.Println("  ✓ .github/workflows/deploy.yml")
 
 	return nil
 }
@@ -400,7 +400,7 @@ func generateArchDoc(s *state.AnalysisState, option *state.ArchOption, p *state.
 
 	// External actors
 	b.WriteString("    user([\"Users / Clients\"]) --> " + compAbbr + "\n")
-	b.WriteString("    ado([\"Azure DevOps\nCI/CD\"]) -.-> " + compAbbr + "\n")
+	b.WriteString("    ghactions([\"GitHub Actions\nCI/CD\"]) -.-> " + compAbbr + "\n")
 
 	// Connections
 	b.WriteString("    " + compAbbr + " --> kv\n")
@@ -451,7 +451,7 @@ func generateArchDoc(s *state.AnalysisState, option *state.ArchOption, p *state.
 	b.WriteString("```mermaid\nflowchart LR\n")
 	b.WriteString("    app[\"" + option.Compute.Service + "\"] -- \"Managed Identity\" --> kv[\"Key Vault\"]\n")
 	b.WriteString("    app -- \"Managed Identity\" --> data[(\"Data Services\")]\n")
-	b.WriteString("    ado[\"Azure DevOps\"] -- \"Service Connection\" --> azure[\"Azure RBAC\"]\n")
+	b.WriteString("    ghactions[\"GitHub Actions\"] -- \"OIDC Federation\" --> azure[\"Azure RBAC\"]\n")
 	b.WriteString("    azure --> app\n")
 	b.WriteString("```\n\n")
 	b.WriteString(fmt.Sprintf("| Layer | Choice |\n|---|---|\n"))
@@ -513,8 +513,8 @@ func generateArchDoc(s *state.AnalysisState, option *state.ArchOption, p *state.
 	b.WriteString(fmt.Sprintf("| Dev / Test | %s |\n", option.EstimatedCostDev))
 	b.WriteString(fmt.Sprintf("| Production | %s |\n\n", option.EstimatedCostProd))
 
-	// ── CI/CD Pipeline (Azure DevOps) ──
-	b.WriteString("## 10. CI/CD Pipeline (Azure DevOps)\n\n")
+	// ── CI/CD Pipeline (GitHub Actions) ──
+	b.WriteString("## 10. CI/CD Pipeline (GitHub Actions)\n\n")
 	b.WriteString("```mermaid\nflowchart LR\n")
 	b.WriteString("    push[\"git push\"] --> ci[\"CI Pipeline\\nbuild + test + lint\"]\n")
 	b.WriteString("    ci --> iac[\"IaC Validate\\nbicep build\"]\n")
@@ -522,7 +522,7 @@ func generateArchDoc(s *state.AnalysisState, option *state.ArchOption, p *state.
 	b.WriteString("    gate --> deploy[\"Deploy Pipeline\\naz deployment\"]\n")
 	b.WriteString("    deploy --> release[\"Release Pipeline\\nGitHub Release\"]\n")
 	b.WriteString("```\n\n")
-	b.WriteString("Pipelines are Azure DevOps YAML pipelines. Releases are published to **GitHub Releases**.\n\n")
+	b.WriteString("Workflows use GitHub Actions with OIDC federation for Azure authentication.\n\n")
 	if p.CICDRecommendation != nil {
 		for _, wf := range p.CICDRecommendation.Workflows {
 			b.WriteString(fmt.Sprintf("- **%s** (`%s`) — %s\n", wf.Name, wf.File, wf.Purpose))
@@ -583,7 +583,7 @@ func generateArchDoc(s *state.AnalysisState, option *state.ArchOption, p *state.
 	b.WriteString("- [Cloud Adoption Framework](https://learn.microsoft.com/azure/cloud-adoption-framework/)\n")
 	b.WriteString("- [Azure naming conventions](https://learn.microsoft.com/azure/cloud-adoption-framework/ready/azure-best-practices/resource-naming)\n")
 	b.WriteString("- [Bicep documentation](https://learn.microsoft.com/azure/azure-resource-manager/bicep/)\n")
-	b.WriteString("- [Azure DevOps Pipelines](https://learn.microsoft.com/azure/devops/pipelines/)\n")
+	b.WriteString("- [GitHub Actions for Azure](https://learn.microsoft.com/azure/developer/github/github-actions)\n")
 
 	return b.String()
 }

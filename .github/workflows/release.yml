@@ -1,0 +1,58 @@
+# Aegis — Release: Build binaries and publish GitHub Release
+#
+# Trigger: tags matching v* (e.g., v0.3.0)
+# Builds cross-platform binaries and creates a GitHub Release.
+
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write   # create releases
+
+jobs:
+  release:
+    name: Build & Release
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Run tests
+        run: go test -race ./...
+
+      - name: Cross-compile binaries
+        run: |
+          TAG=${GITHUB_REF_NAME}
+          echo "Building release: $TAG"
+          mkdir -p ../dist
+
+          GOOS=linux   GOARCH=amd64 go build -ldflags "-s -w" -o ../dist/aegisctl-linux-amd64          ./cmd/aegisctl
+          GOOS=linux   GOARCH=arm64 go build -ldflags "-s -w" -o ../dist/aegisctl-linux-arm64          ./cmd/aegisctl
+          GOOS=darwin  GOARCH=amd64 go build -ldflags "-s -w" -o ../dist/aegisctl-darwin-amd64         ./cmd/aegisctl
+          GOOS=darwin  GOARCH=arm64 go build -ldflags "-s -w" -o ../dist/aegisctl-darwin-arm64         ./cmd/aegisctl
+          GOOS=windows GOARCH=amd64 go build -ldflags "-s -w" -o ../dist/aegisctl-windows-amd64.exe   ./cmd/aegisctl
+          GOOS=windows GOARCH=arm64 go build -ldflags "-s -w" -o ../dist/aegisctl-windows-arm64.exe   ./cmd/aegisctl
+
+      - name: Generate checksums
+        working-directory: dist
+        run: |
+          sha256sum * > checksums-sha256.txt
+          cat checksums-sha256.txt
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            dist/aegisctl-*
+            dist/checksums-sha256.txt

@@ -11,7 +11,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/aegis/aegisctl/internal/analyzer"
+	"github.com/jpamies/aegisctl/internal/analyzer"
 )
 
 // WriteFile writes content to a file, creating directories as needed.
@@ -68,7 +68,7 @@ func FormatAnalysis(f *analyzer.Findings) string {
 	// CI
 	b.WriteString("## CI/CD Configuration\n\n")
 	if f.CI.HasGitHubActions {
-		b.WriteString("CI/CD pipelines:\n")
+		b.WriteString("GitHub Actions workflows:\n")
 		for _, w := range f.CI.Workflows {
 			b.WriteString(fmt.Sprintf("- %s\n", w))
 		}

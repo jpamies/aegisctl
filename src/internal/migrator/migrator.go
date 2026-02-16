@@ -8,8 +8,8 @@ import (
 	"sort"
 	"text/template"
 
-	"github.com/aegis/aegisctl/internal/analyzer"
-	"github.com/aegis/aegisctl/internal/output"
+	"github.com/jpamies/aegisctl/internal/analyzer"
+	"github.com/jpamies/aegisctl/internal/output"
 )
 
 // ServiceMapping defines an AWS-to-Azure service mapping.

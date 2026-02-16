@@ -13,7 +13,7 @@ You always prefer:
 - Key Vault for secrets that cannot use Managed Identity
 - App Configuration for non-secret settings
 - Bicep for IaC (never ARM JSON or Terraform)
-- Azure DevOps Pipelines for CI/CD
+- GitHub Actions for CI/CD
 - PaaS over IaaS when possible
 - Consumption/serverless pricing when applicable
 - Scale-to-zero for dev/test environments
@@ -155,7 +155,7 @@ Requirements:
 Respond with ONLY the Bicep code, no markdown fences, no explanation.`
 
 // PipelinePrompt is used during "apply" to generate Azure DevOps pipeline YAML.
-const PipelinePrompt = `Generate Azure DevOps pipeline YAML for the following application and architecture.
+const PipelinePrompt = `Generate GitHub Actions workflow YAML for the following application and architecture.
 
 Application details:
 %s
@@ -163,41 +163,40 @@ Application details:
 Architecture plan:
 %s
 
-Generate a JSON object with the pipeline files:
+Generate a JSON object with the workflow files:
 {
   "workflows": [
     {
-      "path": "pipelines/ci.yml",
+      "path": ".github/workflows/ci.yml",
       "content": "full YAML content"
     },
     {
-      "path": "pipelines/iac-validate.yml",
+      "path": ".github/workflows/iac-validate.yml",
       "content": "full YAML content"
     },
     {
-      "path": "pipelines/deploy.yml",
+      "path": ".github/workflows/deploy.yml",
       "content": "full YAML content"
     }
   ]
 }
 
-Requirements for CI pipeline:
+Requirements for CI workflow:
 - Trigger on push to main/develop and pull_request to main
-- Use 'pool: vmImage: ubuntu-latest'
+- Use 'runs-on: ubuntu-latest'
 - Build and test the application
-- Use correct language/runtime setup (GoTool@0, NodeTool@0, UsePythonVersion@0, etc.)
+- Use correct language/runtime setup (actions/setup-go, actions/setup-node, actions/setup-python, etc.)
 - Include linting and formatting checks
-- Publish build artefacts with PublishBuildArtifacts@1
+- Upload build artefacts with actions/upload-artifact@v4
 
-Requirements for IaC validation pipeline:
+Requirements for IaC validation workflow:
 - Trigger on changes to infra/ directory
-- Use AzureCLI@2 tasks with $(AZURE_SERVICE_CONNECTION)
 - Validate Bicep with az bicep build
 
-Requirements for Deploy pipeline:
-- Manual trigger (trigger: none) with parameters for environment and dryRun
-- Use AzureCLI@2 with $(AZURE_SERVICE_CONNECTION) for Azure operations
-- Require Azure DevOps Environment approval (use deployment job with environment)
+Requirements for Deploy workflow:
+- Manual trigger (workflow_dispatch) with inputs for environment and dry_run
+- Use OIDC federation (azure/login@v2 with client-id, tenant-id, subscription-id)
+- Require GitHub Environment approval
 - Run what-if preview before deploy
 - Deploy with mode Incremental ONLY (never Complete)
 - Use stages: Preview → Deploy
@@ -219,7 +218,7 @@ Generate a Markdown document (raw markdown, no code fences) that includes:
 2. Remediation hierarchy (Managed Identity → Key Vault → App Configuration)
 3. Specific remediation steps for each finding, with code examples where applicable
 4. Azure RBAC role assignments needed
-5. CI/CD security recommendations (Azure DevOps service connections, secret scanning, etc.)
+5. CI/CD security recommendations (OIDC federation, GitHub secret scanning, etc.)
 6. Compliance considerations
 
 Be specific to the actual findings — do not generate generic content.

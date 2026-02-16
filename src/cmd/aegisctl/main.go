@@ -18,12 +18,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aegis/aegisctl/internal/analyzer"
-	"github.com/aegis/aegisctl/internal/copilot"
-	"github.com/aegis/aegisctl/internal/generator"
-	"github.com/aegis/aegisctl/internal/output"
-	"github.com/aegis/aegisctl/internal/recommend"
-	"github.com/aegis/aegisctl/internal/state"
+	"github.com/jpamies/aegisctl/internal/analyzer"
+	"github.com/jpamies/aegisctl/internal/copilot"
+	"github.com/jpamies/aegisctl/internal/generator"
+	"github.com/jpamies/aegisctl/internal/output"
+	"github.com/jpamies/aegisctl/internal/recommend"
+	"github.com/jpamies/aegisctl/internal/state"
 )
 
 const version = "0.3.0"
