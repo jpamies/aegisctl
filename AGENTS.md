@@ -20,7 +20,7 @@
 
 - **Go stdlib only** — do not introduce third-party Go modules.
 - **Bicep** for all Azure IaC — no ARM JSON, no Terraform.
-- **GitHub Actions** for CI/CD — no other CI system.
+- **Azure DevOps Pipelines** for CI/CD. Releases are published to **GitHub Releases**.
 - No secrets, tokens, or credentials may be committed. Use `REDACTED` if an
   example is needed. Example values must be clearly labelled `<!-- EXAMPLE ONLY -->`.
 - Terminology: **WAF** always means **Well-Architected Framework**. If you need
@@ -51,29 +51,39 @@
   disclaimer that scores are not endorsed by Microsoft.
 - AWS migration mapping is **best-effort** and must be flagged as such.
 
-## 4. Deploy modes
+## 4. CLI workflow (init / plan / apply)
 
-| Mode | Trigger | Approval required | Default |
-|---|---|---|---|
-| `generate` | Any `aegisctl pack` run | No | **Yes** |
-| `manual` | `workflow_dispatch` on deploy.yml | GitHub Environment approval | No |
-| `auto` | Push to `main` (if enabled) | GitHub Environment approval | No |
-
-### Switching modes
+aegisctl uses a Terraform-style three-step workflow:
 
 ```bash
-# Generate-only (default, safe)
-aegisctl pack --deploy-mode=generate
-
-# Manual deploy — triggers workflow_dispatch, still needs Environment approval
-aegisctl pack --deploy-mode=manual
-
-# Auto deploy — merges trigger deploy.yml on push, still needs Environment approval
-aegisctl pack --deploy-mode=auto
+aegisctl init <repoPath>                        # Scan + enrich → .aegis/state.json
+aegisctl plan <repoPath>                        # Recommend options → .aegis/plan.json
+aegisctl apply <repoPath> --output <dir>        # Write IaC + pipelines + docs
 ```
+
+- **init** — heuristic repo scan + optional Copilot enrichment (requires `AEGIS_GITHUB_TOKEN` or `GITHUB_TOKEN`).
+- **plan** — generates 3 architecture options with WAF scores; interactive selection.
+- **apply** — produces Bicep, Azure DevOps Pipelines, and documentation.
+- **analyze** — quick print-only analysis (no state).
+
+### Deploy modes
+
+| Mode | Flag | Approval required | Default |
+|---|---|---|---|
+| `off` | `--deploy off` | No | **Yes** |
+| `manual` | `--deploy manual` | Azure DevOps Environment approval | No |
+| `auto` | `--deploy auto` | Azure DevOps Environment approval | No |
 
 > **Agents must never switch deploy mode on behalf of the user.**
 > If a user asks to deploy, confirm the mode change explicitly.
+
+### State directory
+
+aegisctl persists state in `.aegis/` under the repo root:
+- `.aegis/state.json` — analysis output (created by `init`)
+- `.aegis/plan.json` — selected plan (created by `plan`)
+
+Add `.aegis/` to `.gitignore`.
 
 ## 5. Scoring policy (WAF scorecard)
 
@@ -91,15 +101,17 @@ When an agent is asked to:
 
 | Request | Correct response |
 |---|---|
-| "Generate an architecture pack" | Run `aegisctl pack` in generate mode |
+| "Analyze my repo" | Run `aegisctl init .` then `aegisctl plan .` |
+| "Generate architecture" | Run `aegisctl init .` → `plan .` → `apply . --output out/` |
 | "Deploy to Azure" | Confirm deploy mode, require environment approval |
-| "Score my repo" | Run `aegisctl score`, include disclaimer |
-| "Migrate from AWS" | Run `aegisctl migrate-aws`, flag best-effort |
+| "Score my repo" | Run `aegisctl plan .`, review WAF scores in the plan options |
+| "Migrate from AWS" | Run `aegisctl init .` → `plan .` (AWS hints auto-detected) |
 | "Add a secret to config" | Refuse; recommend Managed Identity → Key Vault pattern |
+| "Use Copilot" | Ensure `GITHUB_TOKEN` is set, then run `init` + `plan` |
 
 ## 7. References
 
 - [Azure Well-Architected Framework](https://learn.microsoft.com/azure/well-architected/)
 - [Azure Cloud Adoption Framework](https://learn.microsoft.com/azure/cloud-adoption-framework/)
 - [Bicep documentation](https://learn.microsoft.com/azure/azure-resource-manager/bicep/)
-- [GitHub Actions documentation](https://docs.github.com/actions)
+- [Azure DevOps Pipelines documentation](https://learn.microsoft.com/azure/devops/pipelines/)

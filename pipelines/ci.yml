@@ -1,0 +1,75 @@
+# Aegis — CI: Build, Test, Lint
+# Azure DevOps pipeline for continuous integration.
+# Runs on every push and pull request to main/develop.
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+
+pr:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  GO_VERSION: '1.22'
+  SRC_DIR: 'src'
+
+stages:
+  - stage: Build
+    displayName: 'Build, Test & Lint'
+    jobs:
+      - job: BuildTestLint
+        displayName: 'Go Build + Test + Lint'
+        steps:
+          - task: GoTool@0
+            displayName: 'Set up Go $(GO_VERSION)'
+            inputs:
+              version: '$(GO_VERSION)'
+
+          - script: |
+              unformatted=$(gofmt -l .)
+              if [ -n "$unformatted" ]; then
+                echo "##vso[task.logissue type=error]Files not formatted:"
+                echo "$unformatted"
+                exit 1
+              fi
+            displayName: 'Check formatting'
+            workingDirectory: $(SRC_DIR)
+
+          - script: go vet ./...
+            displayName: 'Vet'
+            workingDirectory: $(SRC_DIR)
+
+          - script: go test -v -race -coverprofile=$(Agent.TempDirectory)/coverage.out ./...
+            displayName: 'Test'
+            workingDirectory: $(SRC_DIR)
+
+          - task: PublishTestResults@2
+            displayName: 'Publish test results'
+            condition: succeededOrFailed()
+            inputs:
+              testResultsFormat: 'JUnit'
+              testResultsFiles: '$(Agent.TempDirectory)/*.xml'
+              failTaskOnFailedTests: true
+            continueOnError: true
+
+          - script: |
+              GOOS=linux   GOARCH=amd64 go build -v -o $(Build.ArtifactStagingDirectory)/aegisctl-linux-amd64   ./cmd/aegisctl
+              GOOS=darwin  GOARCH=amd64 go build -v -o $(Build.ArtifactStagingDirectory)/aegisctl-darwin-amd64  ./cmd/aegisctl
+              GOOS=darwin  GOARCH=arm64 go build -v -o $(Build.ArtifactStagingDirectory)/aegisctl-darwin-arm64  ./cmd/aegisctl
+              GOOS=windows GOARCH=amd64 go build -v -o $(Build.ArtifactStagingDirectory)/aegisctl-windows-amd64.exe ./cmd/aegisctl
+            displayName: 'Cross-compile binaries'
+            workingDirectory: $(SRC_DIR)
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish binaries'
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+              ArtifactName: 'binaries'
+              publishLocation: 'Container'

@@ -21,7 +21,7 @@ src/
 │   │   ├── packer.go     ← Orchestrate pack generation
 │   │   ├── docs.go       ← Generate Markdown documentation
 │   │   ├── bicep.go      ← Generate Bicep templates
-│   │   └── workflows.go  ← Generate GitHub Actions YAML
+│   │   └── workflows.go  ← Generate Azure DevOps Pipeline YAML
 │   ├── scorer/           ← TODO: WAF scorecard engine
 │   │   ├── scorer.go     ← Score calculation logic
 │   │   └── rules.go      ← Scoring rules per pillar

@@ -68,7 +68,7 @@ func FormatAnalysis(f *analyzer.Findings) string {
 	// CI
 	b.WriteString("## CI/CD Configuration\n\n")
 	if f.CI.HasGitHubActions {
-		b.WriteString("GitHub Actions workflows:\n")
+		b.WriteString("CI/CD pipelines:\n")
 		for _, w := range f.CI.Workflows {
 			b.WriteString(fmt.Sprintf("- %s\n", w))
 		}

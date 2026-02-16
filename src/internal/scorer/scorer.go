@@ -130,7 +130,7 @@ func computeScorecard(f *analyzer.Findings) ScorecardData {
 	// --- Cost Optimization ---
 	s.CostOpt = 2
 	r.CostOpt = "Baseline — no cost signals analyzed."
-	d.CostOptStrengths = "Using open-source tooling (Go, GitHub Actions)."
+	d.CostOptStrengths = "Using open-source tooling (Go, Azure DevOps Pipelines)."
 	d.CostOptGaps = "No SKU selection, autoscale, or cost alerting detected."
 	if f.IaC.HasBicep {
 		s.CostOpt++
@@ -145,8 +145,8 @@ func computeScorecard(f *analyzer.Findings) ScorecardData {
 	d.OpsExcelGaps = "No CI, no IaC, no deployment pipeline detected."
 	if f.CI.HasGitHubActions {
 		s.OpsExcel += 2
-		r.OpsExcel = "GitHub Actions CI detected."
-		d.OpsExcelStrengths = "GitHub Actions workflows present."
+		r.OpsExcel = "Azure DevOps CI detected."
+		d.OpsExcelStrengths = "Azure DevOps Pipelines present."
 		d.OpsExcelGaps = "Review test coverage and deployment gates."
 	}
 	if f.IaC.HasBicep {
@@ -209,7 +209,7 @@ func generateImprovements(f *analyzer.Findings, s Scores) []Improvement {
 			Title:       "Add CI/CD pipeline",
 			Pillar:      "Operational Excellence",
 			Impact:      "High",
-			Description: "Implement GitHub Actions with build, test, and gated deploy workflows.",
+			Description: "Implement Azure DevOps Pipelines with build, test, and gated deploy stages.",
 		})
 	}
 
